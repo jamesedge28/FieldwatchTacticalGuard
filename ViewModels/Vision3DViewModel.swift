@@ -218,8 +218,6 @@ extension Vision3DViewModel: ARSessionDelegate, ARSCNViewDelegate {
         let node = SCNNode()
 
         if isMatrixModeActive {
-            // Conversión de geometría ARMeshGeometry a SCNGeometry en modo Wireframe
-            let meshGeometry = ARSCNFaceGeometry(device: sceneView.device!)
             // Material táctico Matrix: Líneas verdes fluorescentes sobre fondo negro
             let wireframeMaterial = SCNMaterial()
             wireframeMaterial.fillMode = .lines // MODO MALLA / WIREFRAME PURO

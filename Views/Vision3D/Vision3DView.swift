@@ -1,5 +1,6 @@
 import SwiftUI
 import SceneKit
+import ARKit
 
 /// Vista Principal de la Pestaña 3: "Visión 3D" (LiDAR Espacial y Reflejos)
 public struct Vision3DView: View {
