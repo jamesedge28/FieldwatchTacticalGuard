@@ -14,6 +14,11 @@ jobs:
       - name: Descargar repositorio
         uses: actions/checkout@v4
 
+      - name: Configurar Xcode 16 (Compatible con formato 77)
+        uses: maxim-lobanov/setup-xcode@v1
+        with:
+          xcode-version: latest-stable
+
       - name: Instalar XcodeGen
         run: |
           brew install xcodegen
