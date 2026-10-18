@@ -22,7 +22,6 @@ public final class AudioHapticEngine {
         do {
             let session = AVAudioSession.sharedInstance()
             try session.setCategory(.playback, mode: .spokenAudio, options: [.duckOthers])
-            try session.setActive(true)
         } catch {
             print("[AUDIO] Error configurando sesión de audio: \(error.localizedDescription)")
         }

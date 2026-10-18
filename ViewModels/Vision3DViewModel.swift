@@ -36,7 +36,7 @@ public final class Vision3DViewModel: NSObject, ObservableObject {
     @Published public var systemLog: String = "LIDAR ESPACIAL: SISTEMA INICIALIZADO"
 
     // MARK: - Propiedades de ARKit y SceneKit
-    public let sceneView = ARSCNView()
+    public lazy var sceneView: ARSCNView = ARSCNView()
     private var meshAnchors: [ARMeshAnchor] = []
     private var redBeaconNodes: [SCNNode] = []
 
@@ -48,7 +48,7 @@ public final class Vision3DViewModel: NSObject, ObservableObject {
     // MARK: - Verificación de Hardware LiDAR
 
     public func checkLiDARCapabilities() {
-        if ARWorldTrackingConfiguration.supportsSceneReconstruction(.mesh) {
+        if ARWorldTrackingConfiguration.isSupported && ARWorldTrackingConfiguration.supportsSceneReconstruction(.mesh) {
             self.isLiDARSupported = true
             self.systemLog = "LIDAR DUAL DETECTADO: MALLA .MESH DISPONIBLE"
         } else {
@@ -60,6 +60,10 @@ public final class Vision3DViewModel: NSObject, ObservableObject {
     // MARK: - Control de Sesión AR
 
     public func startSession() {
+        guard ARWorldTrackingConfiguration.isSupported else {
+            self.isSessionActive = false
+            return
+        }
         let configuration = ARWorldTrackingConfiguration()
         configuration.planeDetection = [.horizontal, .vertical]
         configuration.environmentTexturing = .none

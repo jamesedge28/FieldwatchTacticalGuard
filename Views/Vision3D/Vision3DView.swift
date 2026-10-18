@@ -16,9 +16,27 @@ public struct Vision3DView: View {
             )
 
             ZStack {
-                // Vista de Realidad Aumentada con Malla Matrix
-                ARMatrixRepresentable(viewModel: viewModel)
+                if ARWorldTrackingConfiguration.isSupported {
+                    // Vista de Realidad Aumentada con Malla Matrix
+                    ARMatrixRepresentable(viewModel: viewModel)
+                        .edgesIgnoringSafeArea(.all)
+                } else {
+                    // Modo táctico degradado sin LiDAR / ARKit
+                    VStack(spacing: 8) {
+                        Image(systemName: "cube.transparent")
+                            .font(.system(size: 48, weight: .light))
+                            .foregroundColor(TacticalTheme.neonGreen.opacity(0.7))
+                        Text("TELEMETRÍA ESPACIAL ACTIVA")
+                            .font(TacticalTheme.monoFont(size: 11, weight: .bold))
+                            .foregroundColor(TacticalTheme.neonGreen)
+                        Text("DISPOSITIVO SIN SENSOR LIDAR DUAL")
+                            .font(TacticalTheme.monoFont(size: 9))
+                            .foregroundColor(TacticalTheme.textMuted)
+                    }
+                    .frame(maxWidth: .infinity, maxHeight: .infinity)
+                    .background(TacticalTheme.pureBlack)
                     .edgesIgnoringSafeArea(.all)
+                }
 
                 // Superposición HUD de Navegación Espacial en Oscuridad
                 VStack {

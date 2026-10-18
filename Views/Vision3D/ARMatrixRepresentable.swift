@@ -11,6 +11,9 @@ public struct ARMatrixRepresentable: UIViewRepresentable {
     }
 
     public func makeUIView(context: Context) -> ARSCNView {
+        guard ARWorldTrackingConfiguration.isSupported else {
+            return ARSCNView(frame: .zero)
+        }
         let view = viewModel.sceneView
 
         // Agregar gesto táctil para apuntar y disparar el análisis de reflectancia láser
