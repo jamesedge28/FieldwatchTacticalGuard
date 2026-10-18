@@ -1,0 +1,18 @@
+{
+	"folders": [
+		{
+			"name": "Fieldwatch Tactical Guard",
+			"path": "."
+		}
+	],
+	"settings": {
+		"workbench.colorTheme": "Default Dark Modern",
+		"editor.fontFamily": "Consolas, 'Courier New', monospace",
+		"editor.fontSize": 13,
+		"files.exclude": {
+			"**/.git": true,
+			"**/.DS_Store": true
+		},
+		"swift.path": ""
+	}
+}

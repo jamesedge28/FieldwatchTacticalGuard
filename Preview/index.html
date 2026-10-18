@@ -1,0 +1,660 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Fieldwatch Tactical Guard - Simulador Operativo</title>
+  <script src="https://www.gstatic.com/antigravity/web/dev/tailwindcss.min.js"></script>
+  <style>
+    @keyframes pulseGlow {
+      0%, 100% { opacity: 0.9; box-shadow: 0 0 12px rgba(0, 255, 0, 0.4); }
+      50% { opacity: 0.5; box-shadow: 0 0 4px rgba(0, 255, 0, 0.2); }
+    }
+    @keyframes strobeAlarm {
+      0%, 100% { background-color: #000000; }
+      50% { background-color: #7f1d1d; }
+    }
+    .tactical-border {
+      border: 1px solid rgba(0, 255, 0, 0.3);
+    }
+    .tactical-glow {
+      box-shadow: 0 0 10px rgba(0, 255, 0, 0.25);
+    }
+    .tactical-alert-glow {
+      box-shadow: 0 0 12px rgba(255, 59, 48, 0.5);
+    }
+    .hud-brackets {
+      position: relative;
+    }
+    .hud-brackets::before {
+      content: '';
+      position: absolute;
+      top: -2px; left: -2px;
+      width: 10px; height: 10px;
+      border-top: 2px solid #00FF00;
+      border-left: 2px solid #00FF00;
+    }
+    .hud-brackets::after {
+      content: '';
+      position: absolute;
+      bottom: -2px; right: -2px;
+      width: 10px; height: 10px;
+      border-bottom: 2px solid #00FF00;
+      border-right: 2px solid #00FF00;
+    }
+  </style>
+</head>
+<body class="bg-black text-gray-200 antialiased p-4 font-mono select-none">
+  <!-- Marco Principal del Dispositivo iPhone / HUD -->
+  <div class="max-w-md mx-auto bg-black border-2 border-[#1C1C1E] rounded-3xl overflow-hidden shadow-2xl flex flex-col h-[780px] relative">
+    
+    <!-- Barra Superior Táctica -->
+    <div class="bg-black px-4 pt-3 pb-2 border-b border-[#1C1C1E] flex flex-col gap-1">
+      <div class="flex justify-between items-center text-[12px] text-[#00FF00]/80 font-bold">
+        <div class="flex items-center gap-1.5">
+          <span class="w-2 h-2 rounded-full bg-[#00FF00] animate-ping inline-block"></span>
+          <span>FW-TACTICAL // V4.2</span>
+        </div>
+        <div class="flex items-center gap-2 text-gray-400">
+          <span>SEC: DEF-CON</span>
+          <span id="militaryTime" class="text-[#00FF00]">22:42:10 UTC</span>
+        </div>
+      </div>
+      <div class="flex justify-between items-center mt-0.5">
+        <h1 id="tabTitle" class="text-sm font-black text-[#00FF00] tracking-wider uppercase">ECOSISTEMA RADIOFRECUENCIA</h1>
+        <span id="tabStatusBadge" class="text-[12px] font-bold text-[#00FF00] bg-[#00FF00]/10 border border-[#00FF00]/40 px-2 py-0.5 rounded">
+          ESCÁNER ACTIVO
+        </span>
+      </div>
+    </div>
+
+    <!-- Contenedor Dinámico de Pestañas -->
+    <div class="flex-1 overflow-y-auto p-3 space-y-3 bg-black" id="tabContent">
+      <!-- Se inyecta dinámicamente el contenido de la pestaña activa -->
+    </div>
+
+    <!-- Barra Inferior de 5 Pestañas Modulares -->
+    <div class="bg-black border-t border-[#1C1C1E] px-2 py-2 flex justify-around items-center">
+      <button onclick="switchTab(0)" class="tab-btn flex flex-col items-center gap-1 text-[12px] font-bold transition-all text-[#00FF00]" id="btn-tab-0">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.111 16.404a5.5 5.5 0 017.778 0M12 20h.01m-7.08-7.071c3.904-3.905 10.236-3.905 14.141 0M1.394 9.393c5.857-5.857 15.355-5.857 21.213 0"/></svg>
+        <span>Señales</span>
+      </button>
+
+      <button onclick="switchTab(1)" class="tab-btn flex flex-col items-center gap-1 text-[12px] font-bold transition-all text-gray-500" id="btn-tab-1">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+        <span>Escáner</span>
+      </button>
+
+      <button onclick="switchTab(2)" class="tab-btn flex flex-col items-center gap-1 text-[12px] font-bold transition-all text-gray-500" id="btn-tab-2">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 10l-2 1m0 0l-2-1m2 1v2.5M20 7l-2 1m2-1l-2-1m2 1v2.5M14 4l-2-1-2 1M4 7l2-1M4 7l2 1M4 7v2.5M12 21l-2-1m2 1l2-1m-2 1v-2.5M6 18l-2-1v-2.5M18 18l2-1v-2.5"/></svg>
+        <span>Visión 3D</span>
+      </button>
+
+      <button onclick="switchTab(3)" class="tab-btn flex flex-col items-center gap-1 text-[12px] font-bold transition-all text-gray-500" id="btn-tab-3">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/></svg>
+        <span>Centinela</span>
+      </button>
+
+      <button onclick="switchTab(4)" class="tab-btn flex flex-col items-center gap-1 text-[12px] font-bold transition-all text-gray-500" id="btn-tab-4">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"/></svg>
+        <span>Integridad</span>
+      </button>
+    </div>
+  </div>
+
+  <script>
+    let currentTab = 0;
+
+    // Reloj táctico
+    function updateClock() {
+      const d = new Date();
+      document.getElementById('militaryTime').innerText = d.toTimeString().split(' ')[0] + ' UTC';
+    }
+    setInterval(updateClock, 1000);
+
+    // Gestor de Pestañas
+    const tabsData = [
+      {
+        title: "ECOSISTEMA RADIOFRECUENCIA",
+        status: "ESCÁNER ACTIVO",
+        render: renderTabSignals
+      },
+      {
+        title: "ESCÁNER VISUAL E INFRARROJO",
+        status: "FILTRADO CIFILTER",
+        render: renderTabVisual
+      },
+      {
+        title: "VISIÓN 3D (LIDAR Y REFLEJOS)",
+        status: "MALLA .MESH ACTIVA",
+        render: renderTabVision3D
+      },
+      {
+        title: "CENTINELA VOLUMÉTRICO",
+        status: "LISTO PARA ARMAR",
+        render: renderTabSentinel
+      },
+      {
+        title: "INTEGRIDAD FÍSICA Y PARÁSITOS",
+        status: "AUDITORÍA < 1.0MM",
+        render: renderTabIntegrity
+      }
+    ];
+
+    function switchTab(index) {
+      currentTab = index;
+      document.querySelectorAll('.tab-btn').forEach((btn, idx) => {
+        if (idx === index) {
+          btn.classList.add('text-[#00FF00]');
+          btn.classList.remove('text-gray-500');
+        } else {
+          btn.classList.remove('text-[#00FF00]');
+          btn.classList.add('text-gray-500');
+        }
+      });
+
+      const info = tabsData[index];
+      document.getElementById('tabTitle').innerText = info.title;
+      document.getElementById('tabStatusBadge').innerText = info.status;
+      info.render();
+    }
+
+    // -------------------------------------------------------------
+    // PESTAÑA 1: SEÑALES (BLE + MAPEO DE ZONAS CIEGAS)
+    // -------------------------------------------------------------
+    let signalsSubtab = 'scanner';
+    function renderTabSignals() {
+      const container = document.getElementById('tabContent');
+      container.innerHTML = `
+        <div class="flex bg-[#1C1C1E] p-1 rounded-lg border border-gray-800 text-[12px] font-bold">
+          <button onclick="setSignalsSub('scanner')" class="flex-1 py-1 text-center rounded ${signalsSubtab === 'scanner' ? 'bg-[#00FF00] text-black' : 'text-gray-400'}">ESCÁNER BLE</button>
+          <button onclick="setSignalsSub('heatmap')" class="flex-1 py-1 text-center rounded ${signalsSubtab === 'heatmap' ? 'bg-[#00FF00] text-black' : 'text-gray-400'}">ZONAS CIEGAS RF</button>
+        </div>
+        <div id="signalsSubContent" class="space-y-3"></div>
+      `;
+      renderSignalsSubContent();
+    }
+
+    function setSignalsSub(sub) {
+      signalsSubtab = sub;
+      renderTabSignals();
+    }
+
+    function renderSignalsSubContent() {
+      const sub = document.getElementById('signalsSubContent');
+      if (signalsSubtab === 'scanner') {
+        sub.innerHTML = `
+          <div class="bg-[#1C1C1E] p-3 rounded-lg border border-[#00FF00]/30 space-y-2">
+            <div class="flex justify-between items-center text-[12px]">
+              <span class="text-gray-400">BARRIDO PASIVO CBCENTRAL</span>
+              <span class="text-[#00FF00] font-bold">4 DISPOSITIVOS</span>
+            </div>
+            <div class="h-1 bg-gray-800 rounded-full overflow-hidden">
+              <div class="h-full bg-[#00FF00] w-3/4 animate-pulse"></div>
+            </div>
+          </div>
+
+          <div class="space-y-2 text-[12px]">
+            <!-- Dispositivo Sospechoso -->
+            <div class="bg-[#1C1C1E] p-3 rounded-lg border border-red-500/60 space-y-2">
+              <div class="flex justify-between items-start">
+                <div>
+                  <div class="text-red-400 font-black text-sm">LENS_STREAM_08B</div>
+                  <div class="text-gray-500 text-[12px]">UUID: 0000FFE0-0000-1000-8000-00805F9B34FB</div>
+                </div>
+                <span class="bg-red-500/20 text-red-400 border border-red-500/50 px-2 py-0.5 rounded text-[12px] font-bold">
+                  TRANSMISOR SOSPECHOSO
+                </span>
+              </div>
+              <div class="space-y-1">
+                <div class="flex justify-between text-[12px]">
+                  <span class="text-gray-400">POTENCIA RSSI</span>
+                  <span class="text-red-400 font-bold">-42 dBm (~0.8m)</span>
+                </div>
+                <div class="h-2 bg-gray-800 rounded">
+                  <div class="h-full bg-red-500 rounded" style="width: 85%;"></div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Baliza AirTag -->
+            <div class="bg-[#1C1C1E] p-3 rounded-lg border border-amber-500/40 space-y-2">
+              <div class="flex justify-between items-start">
+                <div>
+                  <div class="text-gray-200 font-bold">AIR_TAG_BEACON_9</div>
+                  <div class="text-gray-500 text-[12px]">UUID: 0000FD6F-0000-1000-8000-00805F9B34FB</div>
+                </div>
+                <span class="bg-amber-500/20 text-amber-400 border border-amber-500/50 px-2 py-0.5 rounded text-[12px] font-bold">
+                  BALIZA / RASTREADOR
+                </span>
+              </div>
+              <div class="space-y-1">
+                <div class="flex justify-between text-[12px]">
+                  <span class="text-gray-400">POTENCIA RSSI</span>
+                  <span class="text-amber-400 font-bold">-62 dBm (~2.4m)</span>
+                </div>
+                <div class="h-2 bg-gray-800 rounded">
+                  <div class="h-full bg-amber-400 rounded" style="width: 58%;"></div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Audio Link -->
+            <div class="bg-[#1C1C1E] p-3 rounded-lg border border-cyan-500/30 space-y-2">
+              <div class="flex justify-between items-start">
+                <div>
+                  <div class="text-gray-200 font-bold">SONY_AUDIO_TX</div>
+                  <div class="text-gray-500 text-[12px]">UUID: 0000180A-0000-1000-8000-00805F9B34FB</div>
+                </div>
+                <span class="bg-cyan-500/20 text-cyan-400 border border-cyan-500/50 px-2 py-0.5 rounded text-[12px] font-bold">
+                  ENLACE AUDIO
+                </span>
+              </div>
+              <div class="space-y-1">
+                <div class="flex justify-between text-[12px]">
+                  <span class="text-gray-400">POTENCIA RSSI</span>
+                  <span class="text-cyan-400 font-bold">-76 dBm (~4.8m)</span>
+                </div>
+                <div class="h-2 bg-gray-800 rounded">
+                  <div class="h-full bg-cyan-400 rounded" style="width: 38%;"></div>
+                </div>
+              </div>
+            </div>
+          </div>
+        `;
+      } else {
+        // Render Heatmap 8x8
+        let gridHtml = '';
+        for (let r = 0; r < 8; r++) {
+          for (let c = 0; c < 8; c++) {
+            const isPeak = (r === 2 && c === 5);
+            const isSafe = (r === 7 && c === 1);
+            let bg = 'bg-green-950/40 border border-green-500/20';
+            let label = '';
+            if (isPeak) {
+              bg = 'bg-red-600 animate-pulse border-2 border-white';
+              label = '📡';
+            } else if (isSafe) {
+              bg = 'bg-[#00FF00] border-2 border-white';
+              label = '🛡️';
+            } else if (Math.abs(r-2) + Math.abs(c-5) < 3) {
+              bg = 'bg-amber-600/60 border border-amber-400/40';
+            }
+            gridHtml += `<div class="aspect-square ${bg} rounded flex items-center justify-center text-[12px] font-bold cursor-pointer" title="[${r},${c}]">${label}</div>`;
+          }
+        }
+
+        sub.innerHTML = `
+          <div class="bg-[#1C1C1E] p-3 rounded-lg border border-[#00FF00]/30 space-y-1.5 text-[12px]">
+            <div class="flex justify-between items-center text-red-400 font-bold">
+              <span>ORIGEN TRANSMISOR ESPÍA:</span>
+              <span>SECTOR [2, 5] // -38 dBm</span>
+            </div>
+            <div class="flex justify-between items-center text-[#00FF00] font-bold">
+              <span>PUNTO CIEGO SEGURO:</span>
+              <span>SECTOR [7, 1] // BLINDADO</span>
+            </div>
+          </div>
+
+          <div class="bg-black p-3 rounded-lg border border-[#00FF00]/40 hud-brackets">
+            <div class="grid grid-cols-8 gap-1.5">
+              ${gridHtml}
+            </div>
+          </div>
+          <div class="text-[12px] text-gray-500 text-center">Toque cualquier celda para simular la posición táctica del operador.</div>
+        `;
+      }
+    }
+
+    // -------------------------------------------------------------
+    // PESTAÑA 2: ESCÁNER VISUAL (ÓPTICA E INFRARROJO)
+    // -------------------------------------------------------------
+    let irThresholdVal = 85;
+    let testHotspotActive = false;
+
+    function renderTabVisual() {
+      const container = document.getElementById('tabContent');
+      container.innerHTML = `
+        <div class="relative bg-black rounded-lg border border-[#00FF00]/40 overflow-hidden h-[360px] flex items-center justify-center hud-brackets">
+          <!-- Visor Simulado -->
+          <div class="absolute inset-0 bg-gradient-to-b from-gray-950 via-black to-gray-950 flex items-center justify-center">
+            <div class="w-40 h-40 rounded-full border border-[#00FF00]/30 flex items-center justify-center">
+              <div class="w-16 h-16 rounded-full border border-red-500/40"></div>
+            </div>
+            <div class="absolute w-full h-[1px] bg-[#00FF00]/20"></div>
+            <div class="absolute h-full w-[1px] bg-[#00FF00]/20"></div>
+          </div>
+
+          <!-- Hotspot IR Simulado -->
+          ${testHotspotActive ? `
+            <div class="absolute top-[38%] left-[52%] flex flex-col items-center">
+              <div class="w-8 h-8 rounded-full border-2 border-red-500 animate-ping absolute"></div>
+              <div class="w-5 h-5 rounded-full bg-white shadow-[0_0_20px_#ffffff] border-2 border-red-500"></div>
+              <span class="text-red-400 text-[12px] font-black bg-black/80 px-1 rounded mt-1 border border-red-500/60">IR-P1 // 940nm</span>
+            </div>
+          ` : `
+            <div class="text-gray-600 text-xs text-center z-10">
+              SUPRESIÓN CROMÁTICA ACTIVA<br><span class="text-[#00FF00]/80">APUNTE A TOMAS DE CORRIENTE O DETECTORES</span>
+            </div>
+          `}
+
+          <!-- Telemetría HUD -->
+          <div class="absolute top-2 left-2 text-[12px] text-[#00FF00] space-y-0.5 bg-black/60 p-1 rounded">
+            <div>ISO: 3200 (BOOST)</div>
+            <div>FPS: 30.0 FIX</div>
+          </div>
+          <div class="absolute top-2 right-2 text-[12px] text-cyan-400 text-right bg-black/60 p-1 rounded">
+            <div>FILTRO: IR HIGH-PASS</div>
+            <div>850-940nm OPTIC</div>
+          </div>
+        </div>
+
+        ${testHotspotActive ? `
+          <div class="bg-red-950/80 border border-red-500 p-2.5 rounded-lg flex items-center gap-2 text-red-200 text-xs">
+            <span class="text-lg">⚠️</span>
+            <div><strong>¡DESTELLO INFRARROJO CONFIRMADO!</strong> LED de visión nocturna de cámara oculta detectado.</div>
+          </div>
+        ` : ''}
+
+        <!-- Controles -->
+        <div class="bg-[#1C1C1E] p-3 rounded-lg border border-[#00FF00]/30 space-y-3">
+          <div class="space-y-1">
+            <div class="flex justify-between text-[12px]">
+              <span class="text-gray-400">CORTE DE LUMINANCIA IR:</span>
+              <span class="text-[#00FF00] font-bold" id="thresholdDisplay">${irThresholdVal}%</span>
+            </div>
+            <input type="range" min="50" max="98" value="${irThresholdVal}" class="w-full accent-[#00FF00]" oninput="updateIRThreshold(this.value)">
+          </div>
+
+          <div class="flex gap-2">
+            <button onclick="toggleIRHotspot()" class="flex-1 py-2 rounded text-xs font-black ${testHotspotActive ? 'bg-red-600 text-white' : 'bg-cyan-500 text-black'}">
+              ${testHotspotActive ? 'DESACTIVAR TEST IR' : 'SIMULAR DESTELLO IR OCULTO'}
+            </button>
+          </div>
+        </div>
+      `;
+    }
+
+    function updateIRThreshold(val) {
+      irThresholdVal = val;
+      document.getElementById('thresholdDisplay').innerText = val + '%';
+    }
+
+    function toggleIRHotspot() {
+      testHotspotActive = !testHotspotActive;
+      renderTabVisual();
+    }
+
+    // -------------------------------------------------------------
+    // PESTAÑA 3: VISIÓN 3D (LIDAR MATRIX + REFLEJO LÁSER)
+    // -------------------------------------------------------------
+    let matrixMode = true;
+    let laserAnomalies = 1;
+
+    function renderTabVision3D() {
+      const container = document.getElementById('tabContent');
+      container.innerHTML = `
+        <div class="relative bg-black rounded-lg border border-[#00FF00]/40 overflow-hidden h-[340px] flex items-center justify-center hud-brackets">
+          <!-- Malla 3D Wireframe estilo Matrix -->
+          <svg class="absolute inset-0 w-full h-full opacity-60">
+            <line x1="50" y1="20" x2="300" y2="60" stroke="#00FF00" stroke-width="1" />
+            <line x1="300" y1="60" x2="350" y2="280" stroke="#00FF00" stroke-width="1" />
+            <line x1="350" y1="280" x2="80" y2="260" stroke="#00FF00" stroke-width="1" />
+            <line x1="80" y1="260" x2="50" y2="20" stroke="#00FF00" stroke-width="1" />
+            <line x1="50" y1="20" x2="200" y2="150" stroke="#00FF00" stroke-dasharray="3,3" />
+            <line x1="300" y1="60" x2="200" y2="150" stroke="#00FF00" stroke-dasharray="3,3" />
+            <line x1="350" y1="280" x2="200" y2="150" stroke="#00FF00" stroke-dasharray="3,3" />
+            <line x1="80" y1="260" x2="200" y2="150" stroke="#00FF00" stroke-dasharray="3,3" />
+          </svg>
+
+          <!-- Baliza 3D Flotante de Rebote Láser en Pinhole Lens -->
+          <div class="absolute top-[42%] left-[48%] flex flex-col items-center">
+            <div class="w-10 h-10 rounded-full border-2 border-red-500 animate-spin absolute" style="border-style: dashed;"></div>
+            <div class="w-4 h-4 rounded-full bg-red-600 shadow-[0_0_15px_#ff0000]"></div>
+            <span class="text-red-400 text-[12px] font-black bg-black/90 px-1 py-0.5 rounded border border-red-500 mt-1">
+              RELEJO LÁSER // LENTE (1.45m)
+            </span>
+          </div>
+
+          <div class="absolute top-2 left-2 text-[12px] text-[#00FF00] space-y-0.5 bg-black/70 p-1 rounded">
+            <div>MALLA .MESH: ACTIVA</div>
+            <div>POLÍGONOS: 14,820</div>
+          </div>
+          <div class="absolute bottom-2 left-2 text-[12px] text-gray-300 bg-black/80 p-1 rounded">
+            CENTRO FOCAL: 1.45 M
+          </div>
+        </div>
+
+        <div class="bg-[#1C1C1E] p-3 rounded-lg border border-[#00FF00]/30 space-y-2">
+          <div class="flex justify-between items-center text-xs">
+            <span class="text-gray-400">SENSIBILIDAD RETRO-REFLEXIÓN:</span>
+            <span class="text-[#00FF00] font-bold">88% (ESPECULAR)</span>
+          </div>
+          <div class="flex gap-2">
+            <button onclick="pingLaserBounce()" class="flex-1 py-2 bg-red-600 hover:bg-red-700 text-white rounded text-xs font-black">
+              DISPARAR PING LÁSER LIDAR
+            </button>
+            <button onclick="toggleMatrixMode()" class="px-3 py-2 bg-[#1C1C1E] border border-[#00FF00] text-[#00FF00] rounded text-xs font-bold">
+              MODO MATRIX
+            </button>
+          </div>
+        </div>
+      `;
+    }
+
+    function pingLaserBounce() {
+      alert("¡REBOTE ÓPTICO DETECTADO! Coordenadas AR: [X: 0.12, Y: 0.45, Z: -1.45m]. Colocando baliza 3D.");
+    }
+
+    function toggleMatrixMode() {
+      matrixMode = !matrixMode;
+      alert("Modo Matrix alternado.");
+    }
+
+    // -------------------------------------------------------------
+    // PESTAÑA 4: CENTINELA (ALARMA VOLUMÉTRICA > 5 CM)
+    // -------------------------------------------------------------
+    let sentinelArmed = false;
+    let alarmTriggered = false;
+
+    function renderTabSentinel() {
+      const container = document.getElementById('tabContent');
+      let statusColor = sentinelArmed ? (alarmTriggered ? 'border-red-600 text-red-500' : 'border-[#00FF00] text-[#00FF00]') : 'border-amber-500 text-amber-500';
+      let statusText = sentinelArmed ? (alarmTriggered ? '¡ALERTA DE INTRUSIÓN! > 5CM' : 'CENTINELA VOLUMÉTRICO ARMADO') : 'SISTEMA DESARMADO';
+
+      container.innerHTML = `
+        <div class="bg-[#1C1C1E] p-3 rounded-lg border border-[#00FF00]/30 flex justify-between items-center text-xs">
+          <span class="text-gray-400">SECTOR BAJO CUSTODIA:</span>
+          <span class="text-white font-bold">PUERTA HABITACIÓN HOTEL #402</span>
+        </div>
+
+        <div class="flex flex-col items-center justify-center py-6 bg-black rounded-lg border ${statusColor} relative overflow-hidden">
+          ${alarmTriggered ? `<div class="absolute inset-0 bg-red-600/30 animate-pulse"></div>` : ''}
+          
+          <button onclick="toggleSentinelArm()" class="w-44 h-44 rounded-full bg-[#1C1C1E] border-4 ${statusColor} flex flex-col items-center justify-center gap-2 shadow-2xl relative z-10 transition-transform active:scale-95">
+            <svg class="w-12 h-12" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/></svg>
+            <span class="text-sm font-black tracking-wider text-center">${sentinelArmed ? (alarmTriggered ? 'DESARMAR<br>ALARMA' : 'CENTINELA<br>ACTIVO') : 'ARMAR<br>SISTEMA'}</span>
+          </button>
+
+          <div class="mt-4 text-xs font-bold ${statusColor} tracking-wide text-center z-10">
+            ${statusText}
+          </div>
+        </div>
+
+        ${sentinelArmed ? `
+          <div class="space-y-2">
+            <div class="bg-[#1C1C1E] p-3 rounded-lg border border-red-500/40 space-y-1">
+              <div class="flex justify-between text-xs">
+                <span class="text-gray-400">DESVIACIÓN VOLUMÉTRICA ACTUAL:</span>
+                <span class="text-red-400 font-bold">${alarmTriggered ? '18.4 cm (INTRUSIÓN)' : '0.8 cm (CALMA)'}</span>
+              </div>
+              <div class="h-2 bg-gray-800 rounded">
+                <div class="h-full ${alarmTriggered ? 'bg-red-600' : 'bg-[#00FF00]'} rounded" style="width: ${alarmTriggered ? '100%' : '12%'};"></div>
+              </div>
+              <div class="flex justify-between text-[12px] text-gray-500">
+                <span>UMBRAL: 5.0 CM</span>
+                <span>MONITOREO A 10 HZ</span>
+              </div>
+            </div>
+
+            ${!alarmTriggered ? `
+              <button onclick="simulateIntrusion()" class="w-full py-2.5 bg-red-600 hover:bg-red-700 text-white rounded text-xs font-black shadow-lg">
+                SIMULAR APERTURA DE PUERTA (18 CM)
+              </button>
+            ` : ''}
+          </div>
+        ` : `
+          <div class="text-[12px] text-gray-400 bg-[#1C1C1E] p-3 rounded-lg border border-gray-800 space-y-1">
+            <div class="text-[#00FF00] font-bold">PROTOCOLO DE SEGURIDAD EN HOTEL:</div>
+            <div>1. Apunte el iPhone hacia la puerta o ventana de acceso.</div>
+            <div>2. Pulse 'Armar Sistema' (iniciará cuenta regresiva de 5s).</div>
+            <div>3. El sensor LiDAR registrará el snapshot tridimensional en oscuridad absoluta. Cualquier variación > 5cm activará la sirena militar.</div>
+          </div>
+        `}
+      `;
+    }
+
+    function toggleSentinelArm() {
+      if (alarmTriggered) {
+        sentinelArmed = false;
+        alarmTriggered = false;
+      } else {
+        sentinelArmed = !sentinelArmed;
+      }
+      renderTabSentinel();
+    }
+
+    function simulateIntrusion() {
+      alarmTriggered = true;
+      renderTabSentinel();
+    }
+
+    // -------------------------------------------------------------
+    // PESTAÑA 5: INTEGRIDAD FÍSICA Y PARÁSITOS
+    // -------------------------------------------------------------
+    let integritySubtab = 'surface';
+    let surfaceAudited = false;
+    let parasiteDetected = false;
+
+    function renderTabIntegrity() {
+      const container = document.getElementById('tabContent');
+      container.innerHTML = `
+        <div class="flex bg-[#1C1C1E] p-1 rounded-lg border border-gray-800 text-[12px] font-bold">
+          <button onclick="setIntegritySub('surface')" class="flex-1 py-1 text-center rounded ${integritySubtab === 'surface' ? 'bg-[#00FF00] text-black' : 'text-gray-400'}">PAREDES / CERRADURAS</button>
+          <button onclick="setIntegritySub('parasite')" class="flex-1 py-1 text-center rounded ${integritySubtab === 'parasite' ? 'bg-[#00FF00] text-black' : 'text-gray-400'}">DISPOSITIVOS PARÁSITOS</button>
+        </div>
+        <div id="integrityContent" class="space-y-3"></div>
+      `;
+      renderIntegritySub();
+    }
+
+    function setIntegritySub(sub) {
+      integritySubtab = sub;
+      renderTabIntegrity();
+    }
+
+    function renderIntegritySub() {
+      const sub = document.getElementById('integrityContent');
+      if (integritySubtab === 'surface') {
+        let gridHtml = '';
+        for (let y = 0; y < 10; y++) {
+          for (let x = 0; x < 10; x++) {
+            let bg = 'bg-green-950/40 border border-green-500/20';
+            if (surfaceAudited && (x === 4 || x === 5) && (y === 4 || y === 5)) {
+              bg = 'bg-red-600 border border-white animate-pulse';
+            }
+            gridHtml += `<div class="aspect-square ${bg} rounded-[2px]"></div>`;
+          }
+        }
+
+        sub.innerHTML = `
+          <div class="bg-[#1C1C1E] p-2.5 rounded-lg border border-[#00FF00]/30 space-y-1 text-xs">
+            <div class="flex justify-between text-gray-300">
+              <span>BLANCO: CERRADURA DE SEGURIDAD</span>
+              <span class="${surfaceAudited ? 'text-red-400 font-bold' : 'text-[#00FF00]'}">${surfaceAudited ? 'AUDITORÍA: COMPROMETIDA' : 'LÍNEA BASE'}</span>
+            </div>
+          </div>
+
+          <div class="bg-black p-3 rounded-lg border border-[#00FF00]/40 hud-brackets">
+            <div class="grid grid-cols-10 gap-1">
+              ${gridHtml}
+            </div>
+          </div>
+
+          <div class="grid grid-cols-3 gap-2 text-center text-xs">
+            <div class="bg-[#1C1C1E] p-2 rounded border border-gray-800">
+              <div class="text-[12px] text-gray-500">DESVIACIÓN</div>
+              <div class="font-bold ${surfaceAudited ? 'text-red-400' : 'text-[#00FF00]'}">${surfaceAudited ? '-1.25 mm' : '0.04 mm'}</div>
+            </div>
+            <div class="bg-[#1C1C1E] p-2 rounded border border-gray-800">
+              <div class="text-[12px] text-gray-500">PUNTOS > 0.5MM</div>
+              <div class="font-bold ${surfaceAudited ? 'text-red-400' : 'text-[#00FF00]'}">${surfaceAudited ? '4 PUNTOS' : '0'}</div>
+            </div>
+            <div class="bg-[#1C1C1E] p-2 rounded border border-gray-800">
+              <div class="text-[12px] text-gray-500">INTEGRIDAD</div>
+              <div class="font-bold ${surfaceAudited ? 'text-red-400' : 'text-[#00FF00]'}">${surfaceAudited ? '68%' : '100%'}</div>
+            </div>
+          </div>
+
+          <button onclick="toggleSurfaceAudit()" class="w-full py-2.5 ${surfaceAudited ? 'bg-gray-800 text-gray-200' : 'bg-red-600 text-white'} rounded text-xs font-black">
+            ${surfaceAudited ? 'RESETEAR LÍNEA BASE' : 'EJECUTAR AUDITORÍA COMPARATIVA (< 1.0 MM)'}
+          </button>
+        `;
+      } else {
+        // Submódulo Parásitos
+        sub.innerHTML = `
+          <div class="bg-[#1C1C1E] p-3 rounded-lg border border-[#00FF00]/30 space-y-1 text-xs">
+            <div class="text-gray-400 text-[12px]">PATRÓN DE FÁBRICA:</div>
+            <div class="text-white font-bold text-sm">CARGADOR USB-C 20W ESTÁNDAR</div>
+            <div class="text-[12px] text-amber-400">VECTOR: Cámara pinhole o transmisor Wi-Fi en carcasa sobredimensionada.</div>
+          </div>
+
+          <div class="bg-[#1C1C1E] p-3 rounded-lg border ${parasiteDetected ? 'border-red-500' : 'border-[#00FF00]/30'} space-y-2 text-xs">
+            <div class="flex justify-between items-center">
+              <span class="text-gray-400">ESTADO VOLUMÉTRICO:</span>
+              <span class="${parasiteDetected ? 'text-red-400 bg-red-950/60 border border-red-500' : 'text-[#00FF00] bg-green-950/60 border border-[#00FF00]'} px-2 py-0.5 rounded text-[12px] font-bold">
+                ${parasiteDetected ? 'CRÍTICO: DISPOSITIVO PARÁSITO' : 'CONFORME / ESTÁNDAR'}
+              </span>
+            </div>
+
+            <div class="grid grid-cols-3 gap-2 py-1 text-center">
+              <div>
+                <div class="text-[12px] text-gray-500">VOL. FÁBRICA</div>
+                <div class="font-bold text-white">48.5 cm³</div>
+              </div>
+              <div>
+                <div class="text-[12px] text-gray-500">VOL. MEDIDO</div>
+                <div class="font-bold ${parasiteDetected ? 'text-red-400' : 'text-[#00FF00]'}">${parasiteDetected ? '59.2 cm³' : '48.6 cm³'}</div>
+              </div>
+              <div>
+                <div class="text-[12px] text-gray-500">DELTA (%)</div>
+                <div class="font-bold ${parasiteDetected ? 'text-red-400' : 'text-[#00FF00]'}">${parasiteDetected ? '+22.1%' : '+0.2%'}</div>
+              </div>
+            </div>
+
+            <div class="h-2 bg-gray-800 rounded">
+              <div class="h-full ${parasiteDetected ? 'bg-red-600' : 'bg-[#00FF00]'} rounded" style="width: ${parasiteDetected ? '90%' : '15%'};"></div>
+            </div>
+          </div>
+
+          <button onclick="toggleParasiteSim()" class="w-full py-2.5 ${parasiteDetected ? 'bg-gray-800 text-gray-200' : 'bg-red-600 text-white'} rounded text-xs font-black">
+            ${parasiteDetected ? 'RESTAURAR MEDIDAS ESTÁNDAR' : 'SIMULAR CARGADOR PARÁSITO CON PCB ESPÍA (+22% VOL)'}
+          </button>
+        `;
+      }
+    }
+
+    function toggleSurfaceAudit() {
+      surfaceAudited = !surfaceAudited;
+      renderIntegritySub();
+    }
+
+    function toggleParasiteSim() {
+      parasiteDetected = !parasiteDetected;
+      renderIntegritySub();
+    }
+
+    // Inicialización
+    switchTab(0);
+  </script>
+</body>
+</html>

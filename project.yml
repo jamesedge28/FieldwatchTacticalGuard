@@ -1,0 +1,37 @@
+name: FieldwatchTacticalGuard
+options:
+  bundleIdPrefix: com.fieldwatch
+  deploymentTarget:
+    iOS: "16.0"
+  xcodeVersion: "15.0"
+
+settings:
+  base:
+    SWIFT_VERSION: "5.9"
+    CURRENT_PROJECT_VERSION: "1"
+    MARKETING_VERSION: "1.0.0"
+    ENABLE_BITCODE: NO
+    CODE_SIGNING_ALLOWED: NO
+    CODE_SIGNING_REQUIRED: NO
+    CODE_SIGN_IDENTITY: ""
+    DEVELOPMENT_TEAM: ""
+
+targets:
+  FieldwatchTacticalGuard:
+    type: application
+    platform: iOS
+    deploymentTarget: "16.0"
+    sources:
+      - path: App
+      - path: Models
+      - path: Services
+      - path: Theme
+      - path: ViewModels
+      - path: Views
+    info:
+      path: App/Info.plist
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.fieldwatch.tacticalguard
+        INFOPLIST_FILE: App/Info.plist
+        GENERATE_INFOPLIST_KEY_UIRequiredDeviceCapabilities: NO

@@ -1,0 +1,13 @@
+# Xcode / Swift
+build/
+DerivedData/
+*.xcuserstate
+project.xcworkspace/
+xcuserdata/
+*.ipa
+Payload/
+
+# VS Code / OS
+.vscode/
+.DS_Store
+Thumbs.db

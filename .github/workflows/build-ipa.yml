@@ -1,0 +1,49 @@
+name: Compilar IPA para iPhone
+
+on:
+  push:
+    branches: [ "main", "master" ]
+  workflow_dispatch:
+
+jobs:
+  build-ios:
+    name: Compilar Fieldwatch Tactical Guard (.ipa)
+    runs-on: macos-14
+
+    steps:
+      - name: Descargar repositorio
+        uses: actions/checkout@v4
+
+      - name: Instalar XcodeGen
+        run: |
+          brew install xcodegen
+
+      - name: Generar proyecto Xcode (.xcodeproj)
+        run: |
+          xcodegen generate
+
+      - name: Compilar binario de la aplicación iOS (Release)
+        run: |
+          xcodebuild build \
+            -project FieldwatchTacticalGuard.xcodeproj \
+            -scheme FieldwatchTacticalGuard \
+            -configuration Release \
+            -sdk iphoneos \
+            -destination 'generic/platform=iOS' \
+            CODE_SIGNING_ALLOWED=NO \
+            CODE_SIGNING_REQUIRED=NO \
+            CODE_SIGN_IDENTITY="" \
+            BUILD_DIR=build
+
+      - name: Empaquetar en formato .IPA
+        run: |
+          mkdir -p Payload
+          cp -r build/Release-iphoneos/FieldwatchTacticalGuard.app Payload/
+          zip -r FieldwatchTacticalGuard.ipa Payload
+
+      - name: Subir archivo .IPA como artefacto descargable
+        uses: actions/upload-artifact@v4
+        with:
+          name: FieldwatchTacticalGuard-IPA
+          path: FieldwatchTacticalGuard.ipa
+          retention-days: 14
