@@ -34,7 +34,6 @@ public final class VisualScannerViewModel: NSObject, ObservableObject {
 
     public override init() {
         super.init()
-        checkPermissions()
     }
 
     // MARK: - Permisos y Configuración
@@ -91,6 +90,9 @@ public final class VisualScannerViewModel: NSObject, ObservableObject {
     }
 
     public func startSession() {
+        if !isAuthorized {
+            checkPermissions()
+        }
         sessionQueue.async { [weak self] in
             guard let self = self, !self.captureSession.isRunning else { return }
             self.captureSession.startRunning()

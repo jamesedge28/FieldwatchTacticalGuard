@@ -40,10 +40,21 @@ jobs:
             CODE_SIGN_IDENTITY="" \
             BUILD_DIR=build
 
-      - name: Empaquetar en formato .IPA
+      - name: Empaquetar en formato .IPA y asegurar Info.plist
         run: |
           mkdir -p Payload
           cp -r build/Release-iphoneos/FieldwatchTacticalGuard.app Payload/
+          
+          PLIST="Payload/FieldwatchTacticalGuard.app/Info.plist"
+          /usr/libexec/PlistBuddy -c "Add :NSBluetoothAlwaysUsageDescription string 'Fieldwatch Tactical Guard requiere acceso pasivo a Bluetooth para rastrear balizas espia, transmisores encubiertos y triangular zonas ciegas RF.'" "$PLIST" 2>/dev/null || /usr/libexec/PlistBuddy -c "Set :NSBluetoothAlwaysUsageDescription 'Fieldwatch Tactical Guard requiere acceso pasivo a Bluetooth para rastrear balizas espia, transmisores encubiertos y triangular zonas ciegas RF.'" "$PLIST"
+          /usr/libexec/PlistBuddy -c "Add :NSBluetoothPeripheralUsageDescription string 'Permite el escaneo radioelectrico en tiempo real para deteccion de contrainteligencia.'" "$PLIST" 2>/dev/null || /usr/libexec/PlistBuddy -c "Set :NSBluetoothPeripheralUsageDescription 'Permite el escaneo radioelectrico en tiempo real para deteccion de contrainteligencia.'" "$PLIST"
+          /usr/libexec/PlistBuddy -c "Add :NSCameraUsageDescription string 'Fieldwatch Tactical Guard requiere la camara trasera para filtrar opticamente destellos infrarrojos invisibles y ejecutar reconstruccion 3D con LiDAR.'" "$PLIST" 2>/dev/null || /usr/libexec/PlistBuddy -c "Set :NSCameraUsageDescription 'Fieldwatch Tactical Guard requiere la camara trasera para filtrar opticamente destellos infrarrojos invisibles y ejecutar reconstruccion 3D con LiDAR.'" "$PLIST"
+          /usr/libexec/PlistBuddy -c "Add :NSMicrophoneUsageDescription string 'Requerido para generar alertas acusticas y calibracion tactica del entorno.'" "$PLIST" 2>/dev/null || /usr/libexec/PlistBuddy -c "Set :NSMicrophoneUsageDescription 'Requerido para generar alertas acusticas y calibracion tactica del entorno.'" "$PLIST"
+          /usr/libexec/PlistBuddy -c "Add :UILaunchScreen dict" "$PLIST" 2>/dev/null || true
+          
+          echo "=== Info.plist verificado ==="
+          plutil -p "$PLIST"
+          
           zip -r FieldwatchTacticalGuard.ipa Payload
 
       - name: Subir archivo .IPA como artefacto descargable

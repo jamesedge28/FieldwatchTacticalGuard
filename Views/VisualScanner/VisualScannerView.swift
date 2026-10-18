@@ -178,6 +178,12 @@ struct TacticalOpticalHUDOverlay: View {
                 }
             }
         }
+        .onAppear {
+            viewModel.startSession()
+        }
+        .onDisappear {
+            viewModel.stopSession()
+        }
     }
 }
 

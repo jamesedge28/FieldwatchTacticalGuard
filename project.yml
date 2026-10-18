@@ -3,7 +3,7 @@ options:
   bundleIdPrefix: com.fieldwatch
   deploymentTarget:
     iOS: "16.0"
-  xcodeVersion: "15.0"
+  xcodeVersion: "16.0"
 
 settings:
   base:
@@ -30,8 +30,16 @@ targets:
       - path: Views
     info:
       path: App/Info.plist
+      properties:
+        NSBluetoothAlwaysUsageDescription: "Fieldwatch Tactical Guard requiere acceso pasivo a Bluetooth para rastrear balizas espía, transmisores encubiertos y triangular zonas ciegas RF."
+        NSBluetoothPeripheralUsageDescription: "Permite el escaneo radioeléctrico en tiempo real para detección de contrainteligencia."
+        NSCameraUsageDescription: "Fieldwatch Tactical Guard requiere la cámara trasera para filtrar ópticamente destellos infrarrojos invisibles y ejecutar reconstrucción 3D con LiDAR."
+        NSMicrophoneUsageDescription: "Requerido para generar alertas acústicas y calibración táctica del entorno."
+        UILaunchScreen: {}
+        UIStatusBarStyle: "UIStatusBarStyleLightContent"
+        UIViewControllerBasedStatusBarAppearance: false
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.fieldwatch.tacticalguard
         INFOPLIST_FILE: App/Info.plist
-        GENERATE_INFOPLIST_KEY_UIRequiredDeviceCapabilities: NO
+        GENERATE_INFOPLIST_FILE: NO

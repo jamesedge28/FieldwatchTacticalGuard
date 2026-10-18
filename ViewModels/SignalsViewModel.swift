@@ -20,21 +20,27 @@ public final class SignalsViewModel: NSObject, ObservableObject {
     @Published public var maxObservedPowerDbm: Int = -100
 
     // MARK: - Propiedades Privadas
-    private var centralManager: CBCentralManager!
+    private var centralManager: CBCentralManager?
     private var deviceMap: [UUID: BLEDeviceModel] = [:]
     private var simulationTimer: AnyCancellable?
     private var radarAudioDebounce: Date = Date()
 
     public override init() {
         super.init()
-        self.centralManager = CBCentralManager(delegate: self, queue: DispatchQueue.global(qos: .userInitiated), options: [CBCentralManagerOptionShowPowerAlertKey: true])
         setupInitialHeatmap()
+    }
+
+    public func setupCentralManagerIfNeeded() {
+        if centralManager == nil {
+            self.centralManager = CBCentralManager(delegate: self, queue: DispatchQueue.main, options: [CBCentralManagerOptionShowPowerAlertKey: false])
+        }
     }
 
     // MARK: - Control de Escaneo Pasivo
 
     public func startPassiveScan() {
-        guard bluetoothState == .poweredOn else {
+        setupCentralManagerIfNeeded()
+        guard let central = centralManager, bluetoothState == .poweredOn else {
             print("[BLE] Bluetooth no disponible, activando modo simulación táctica...")
             startTacticalSimulation()
             isScanning = true
@@ -42,14 +48,14 @@ public final class SignalsViewModel: NSObject, ObservableObject {
         }
 
         isScanning = true
-        centralManager.scanForPeripherals(withServices: nil, options: [
+        central.scanForPeripherals(withServices: nil, options: [
             CBCentralManagerScanOptionAllowDuplicatesKey: true
         ])
     }
 
     public func stopPassiveScan() {
         isScanning = false
-        centralManager.stopScan()
+        centralManager?.stopScan()
         simulationTimer?.cancel()
     }
 
